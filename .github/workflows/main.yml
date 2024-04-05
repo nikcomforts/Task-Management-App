@@ -47,9 +47,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Build and deploy to GitHub Pages
-        uses: JamesIves/github-pages-deploy-action@4.1.6
+      - name: Build and deploy to Netlify
+        uses: nwtgck/actions-netlify@v1
         with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          BRANCH: gh-pages # Deploy to the gh-pages branch
-          FOLDER: . # Deploy the entire repository
+          publish-dir: ./build  # Replace this with the directory containing your built assets
+          deploy-dir: ./build  # Replace this with the directory to deploy
+          deploy-message: Deploy from GitHub Actions
+          production-deploy: true
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: YOUR_NETLIFY_SITE_ID  # Replace this with your Netlify site ID
