@@ -1,4 +1,4 @@
-name: Deploy to GitHub Pages
+name: Deploy to Netlify
 
 on:
   push:
@@ -13,15 +13,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2  # Checkout the repository's code
 
-      - name: Install dependencies
-        run: npm install  # Install Node.js dependencies (replace with your dependency installation command)
+      - name: Install Netlify CLI
+        run: npm install netlify-cli -g  # Install Netlify CLI globally
 
       - name: Build
         run: npm run build  # Build your application (replace with your build command)
 
-      - name: Deploy to GitHub Pages
-        uses: JamesIves/github-pages-deploy-action@4.1.6
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}  # GitHub token for authentication
-          branch: gh-pages  # Branch to deploy to (replace with your deployment branch)
-          folder: dist  # Folder containing your built assets (replace with your build output folder)
+      - name: Deploy to Netlify
+        run: netlify deploy --prod --dir=dist --auth=${{ secrets.NETLIFY_AUTH_TOKEN }}  # Deploy to Netlify
+        env:
+          NODE_ENV: production
