@@ -50,8 +50,8 @@ jobs:
       - name: Build and deploy to Netlify
         uses: nwtgck/actions-netlify@v1
         with:
-          publish-dir: ./build  # Replace this with the directory containing your built assets
-          deploy-dir: ./build  # Replace this with the directory to deploy
+          publish-dir: main.yml/  # Replace this with the directory containing your built assets
+          deploy-dir: main.yml/  # Replace this with the directory to deploy
           deploy-message: Deploy from GitHub Actions
           production-deploy: true
         env:
