@@ -1,0 +1,27 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main  # Trigger on pushes to the main branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2  # Checkout the repository's code
+
+      - name: Install dependencies
+        run: npm install  # Install Node.js dependencies (replace with your dependency installation command)
+
+      - name: Build
+        run: npm run build  # Build your application (replace with your build command)
+
+      - name: Deploy to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@4.1.6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}  # GitHub token for authentication
+          branch: gh-pages  # Branch to deploy to (replace with your deployment branch)
+          folder: dist  # Folder containing your built assets (replace with your build output folder)
