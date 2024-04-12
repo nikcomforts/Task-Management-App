@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Management App</title>
+    <link rel="stylesheet" href="taskstyles.css"> <!-- Link to the CSS stylesheet -->
+    <style>
+        /* Modal Popup Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 50%;
+            border-radius: 5px;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div id="loginContainer" class="container">
+        <h1>Login</h1>
+        <form id="loginForm">
+            <label for="username">Username:</label><br>
+            <input type="text" id="username" name="username" required><br>
+            <label for="password">Password:</label><br>
+            <input type="password" id="password" name="password" required><br>
+            <button type="submit">Login</button>
+        </form>
+        <p>Forgot your password? <a href="#" onclick="showForgotPasswordModal()">Reset Password</a></p>
+        <p>Don't have an account? <a href="#" onclick="showSignUpForm()">Sign Up</a></p>
+    </div>
+
+    <div id="taskContainer" class="container" style="display: none;">
+        <h1>Task Management App</h1>
+
+        <!-- Form for creating a new task -->
+        <form id="taskForm">
+            <label for="title">Title:</label><br>
+            <input type="text" id="title" name="title" required><br>
+            
+            <label for="description">Description:</label><br>
+            <textarea id="description" name="description" rows="4" cols="50"></textarea><br>
+            
+            <label for="dueDate">Due Date:</label><br>
+            <input type="date" id="dueDate" name="dueDate"><br>
+            
+            <label for="priority">Priority:</label><br>
+            <select id="priority" name="priority">
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+            </select><br>
+            
+            <button type="submit">Create Task</button>
+        </form>
+
+        <!-- Filter and Sort Controls -->
+        <div id="controls">
+            <label for="filterPriority">Filter by Priority:</label>
+            <select id="filterPriority" onchange="filterTasks()">
+                <option value="all">All</option>
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+            </select>
+
+            <label for="sortCriteria">Sort by:</label>
+            <select id="sortCriteria" onchange="sortTasks()">
+                <option value="title">Title</option>
+                <option value="dueDate">Due Date</option>
+                <option value="priority">Priority</option>
+            </select>
+        </div>
+
+        <!-- Container for displaying tasks -->
+        <div id="taskList">
+            <!-- Tasks will be dynamically added here -->
+        </div>
+    </div>
+
+    <!-- Modal Popup -->
+    <div id="deleteTaskModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <p>Are you sure you want to delete this task?</p>
+            <button id="confirmDeleteBtn">Yes</button>
+            <button onclick="closeModal()">No</button>
+        </div>
+    </div>
+
+    <!-- Signup Modal Popup -->
+    <div id="signupModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeSignupModal()">&times;</span>
+            <h2>Sign Up</h2>
+            <form id="signupForm">
+                <label for="newUsername">Username:</label><br>
+                <input type="text" id="newUsername" name="newUsername" required><br>
+                <label for="newPassword">Password:</label><br>
+                <input type="password" id="newPassword" name="newPassword" required><br>
+                <label for="fullName">Full Name:</label><br>
+                <input type="text" id="fullName" name="fullName" required><br>
+                <label for="email">Email:</label><br>
+                <input type="email" id="email" name="email" required><br>
+                <!-- You can add more fields as needed -->
+                <button type="submit">Sign Up</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Forgot Password Modal Popup -->
+    <div id="forgotPasswordModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeForgotPasswordModal()">&times;</span>
+            <h2>Forgot Password</h2>
+            <form id="forgotPasswordForm">
+                <label for="forgotUsernameEmail">Username or Email:</label><br>
+                <input type="text" id="forgotUsernameEmail" name="forgotUsernameEmail" required><br>
+                <button type="submit">Reset Password</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- JavaScript code for managing tasks and authentication -->
+    <script>
+        // Function to show the forgot password modal
+        function showForgotPasswordModal() {
+            const forgotPasswordModal = document.getElementById('forgotPasswordModal');
+            forgotPasswordModal.style.display = 'block';
+        }
+
+        // Function to close the forgot password modal
+        function closeForgotPasswordModal() {
+            const forgotPasswordModal = document.getElementById('forgotPasswordModal');
+            forgotPasswordModal.style.display = 'none';
+        }
+
+        // Function to show the signup modal
+        function showSignUpForm() {
+            console.log("Showing signup modal");
+            const signupModal = document.getElementById('signupModal');
+            signupModal.style.display = 'block';
+        }
+
+        // Function to close the signup modal
+        function closeSignupModal() {
+            console.log("Closing signup modal");
+            const signupModal = document.getElementById('signupModal');
+            signupModal.style.display = 'none';
+        }
+
+        // Dummy user credentials
+        const validUsername = "user";
+        const validPassword = "pass";
+
+        // Array to store registered users
+        let users = [];
+
+        // Function to handle login form submission
+        document.getElementById('loginForm').addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent default form submission
+
+            // Get input values
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            // Perform basic authentication
+            if (username === validUsername && password === validPassword) {
+                // Show task management interface
+                document.getElementById('loginContainer').style.display = 'none';
+                document.getElementById('taskContainer').style.display = 'block';
+                displayTasks();
+            } else {
+                alert("Invalid username or password. Please try again.");
+            }
+        });
+
+        // Function to handle signup form submission
+        document.getElementById('signupForm').addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent default form submission
+
+            // Get input values
+            const newUsername = document.getElementById('newUsername').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const fullName = document.getElementById('fullName').value;
+            const email = document.getElementById('email').value;
+
+            // Perform signup logic (e.g., store user details)
+            // You can implement this logic using AJAX requests to a server-side endpoint or use localStorage for client-side storage
+
+            // Example: Storing user details in localStorage
+            const userDetails = {
+                username: newUsername,
+                password: newPassword,
+                fullName: fullName,
+                email: email
+            };
+            localStorage.setItem('userDetails', JSON.stringify(userDetails));
+
+            // Close the signup modal
+            closeSignupModal();
+
+            // Optionally, you can automatically log in the user after signup
+            // For simplicity, you can redirect the user to the login form
+            document.getElementById('loginContainer').style.display = 'block';
+            document.getElementById('taskContainer').style.display = 'none';
+        });
+
+        // Array to store tasks
+        let tasks = [
+            {
+                id: 1,
+                title: "Complete Project Proposal",
+                description: "Write a detailed project proposal including scope, objectives, and timeline.",
+                dueDate: "2024-03-15",
+                priority: "high"
+            },
+            {
+                id: 2,
+                title: "Prepare Presentation",
+                description: "Create a presentation slide deck for the project proposal defense.",
+                dueDate: "2024-03-20",
+                priority: "medium"
+            },
+            {
+                id: 3,
+                title: "Buy Groceries",
+                description: "Purchase vegetables, fruits, and other essentials for the week.",
+                dueDate: "2024-03-17",
+                priority: "low"
+            }
+        ];
+
+        // Function to display tasks
+        function displayTasks(tasksArray) {
+            const taskList = document.getElementById('taskList');
+            taskList.innerHTML = ''; // Clear existing tasks
+
+            tasksArray.forEach(task => {
+                const taskItem = document.createElement('div');
+                taskItem.innerHTML = `
+                    <h3>${task.title}</h3>
+                    <p>${task.description}</p>
+                    <p>Due Date: ${task.dueDate}</p>
+                    <p>Priority: ${task.priority}</p>
+                    <button onclick="editTask(${task.id})">Edit</button>
+                    <button onclick="deleteTaskWithConfirmation(${task.id})">Delete</button>
+                `;
+                taskList.appendChild(taskItem);
+            });
+        }
+
+        // Function to create a new task
+        function createTask(title, description, dueDate, priority) {
+            const newTask = {
+                id: tasks.length + 1, // Generate unique ID
+                title: title,
+                description: description,
+                dueDate: dueDate,
+                priority: priority
+            };
+            tasks.push(newTask);
+            displayTasks(tasks);
+        }
+
+        // Function to edit an existing task
+        function editTask(id) {
+            const taskToEdit = tasks.find(task => task.id === id);
+            if (taskToEdit) {
+                // Populate the form with task details
+                document.getElementById('title').value = taskToEdit.title;
+                document.getElementById('description').value = taskToEdit.description;
+                document.getElementById('dueDate').value = taskToEdit.dueDate;
+                document.getElementById('priority').value = taskToEdit.priority;
+
+                // Store the ID of the task being edited
+                document.getElementById('taskForm').setAttribute('data-edit-id', id);
+            }
+        }
+
+        // Function to update an existing task
+        function updateTask() {
+            const id = document.getElementById('taskForm').getAttribute('data-edit-id');
+            const title = document.getElementById('title').value;
+            const description = document.getElementById('description').value;
+            const dueDate = document.getElementById('dueDate').value;
+            const priority = document.getElementById('priority').value;
+
+            const taskIndex = tasks.findIndex(task => task.id == id);
+            if (taskIndex !== -1) {
+                // Update task details
+                tasks[taskIndex].title = title;
+                tasks[taskIndex].description = description;
+                tasks[taskIndex].dueDate = dueDate;
+                tasks[taskIndex].priority = priority;
+
+                // Clear the form and reset edit ID
+                document.getElementById('taskForm').reset();
+                document.getElementById('taskForm').removeAttribute('data-edit-id');
+
+                // Refresh task list
+                displayTasks(tasks);
+            }
+        }
+
+        // Function to delete a task with confirmation
+        function deleteTaskWithConfirmation(id) {
+            const modal = document.getElementById('deleteTaskModal');
+            modal.style.display = 'block'; // Show the confirmation modal
+
+            // Set up event listener for the confirm delete button
+            document.getElementById('confirmDeleteBtn').onclick = function() {
+                deleteTask(id); // Call deleteTask if user confirms
+                modal.style.display = 'none'; // Hide the modal after deletion
+            };
+        }
+
+        // Function to delete a task
+        function deleteTask(id) {
+            // Implement task deletion logic here
+            tasks = tasks.filter(task => task.id !== id);
+            displayTasks(tasks);
+        }
+
+        // Function to filter tasks by priority
+        function filterTasks() {
+            const priorityFilter = document.getElementById('filterPriority').value;
+            const filteredTasks = priorityFilter === 'all' ? tasks : tasks.filter(task => task.priority === priorityFilter);
+            displayTasks(filteredTasks);
+        }
+
+        // Function to sort tasks by the selected criteria
+        function sortTasks() {
+            const sortBy = document.getElementById('sortCriteria').value;
+            tasks.sort((a, b) => a[sortBy].localeCompare(b[sortBy]));
+            displayTasks(tasks);
+        }
+
+        // Event listener for task creation form submission
+        document.getElementById('taskForm').addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent default form submission
+
+            // Check if form is in edit mode
+            const editId = this.getAttribute('data-edit-id');
+            if (editId) {
+                updateTask(editId); // Pass the editId to the updateTask function
+            } else {
+                // Get form inputs
+                const title = document.getElementById('title').value;
+                const description = document.getElementById('description').value;
+                const dueDate = document.getElementById('dueDate').value;
+                const priority = document.getElementById('priority').value;
+
+                // Create a new task
+                createTask(title, description, dueDate, priority);
+            }
+        });
+
+        // Initial display of tasks
+        displayTasks();
+    </script>
+</body>
+</html>
